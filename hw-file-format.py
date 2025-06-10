@@ -6,9 +6,9 @@ def main():
     parser = argparse.ArgumentParser(description="Process Heatwatch CSV file(s).")
     parser.add_argument('--input_files', required=True, help="Input CSV file or folder path")
     parser.add_argument('--output_folder', default='formatted', help="Output folder path (optional)")
-    parser.add_argument('--ogr_driver', help="File format for export. Defaults to CSV")
-    parser.add_argument('--convert_tz', action='store_true', help="Convert to local timezone or leave UTC")
-    parser.add_argument('--convert_imperial', action='store_true', help="Convert to imperial units or leave metric")
+    parser.add_argument('--ogr_driver', help="File format for export: CSV, GeoJSON, or Geopackage (optional, defaults to CSV)")
+    parser.add_argument('--convert_tz', action='store_true', help="Convert to local timezone or leave in UTC (optional, defaults to UTC)")
+    parser.add_argument('--convert_imperial', action='store_true', help="Convert to imperial units or leave in metric (optional, defaults to leaving in metric)")
     
     args = parser.parse_args()
     
