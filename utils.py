@@ -129,11 +129,6 @@ def convert_gps_time(df, tz_str, convert_tz=False):
     
     return df
 
-def csv_to_vector(csv_path, driver='GeoJSON'):
-    gdf = gpd.read_file(csv_path)
-    gdf.crs = 'epsg:4326'
-    gdf.to_file(basename(csv_path))
-
 def process_file(csv_path, output_dir='formatted', convert_tz=False, convert_units=True, 
     driver='CSV'):
 
