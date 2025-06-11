@@ -66,7 +66,7 @@ def deg_to_dec(df):
     )
     
     if rows_to_drop.any():
-        print(f"Warning: Dropping {rows_to_drop.sum()} rows with missing or invalid data")
+        print(f"Dropping {rows_to_drop.sum()} rows with invalid data")
         df = df[~rows_to_drop].reset_index(drop=True)
 
     # subset degree, minute, and hemisphere components
@@ -177,7 +177,6 @@ def process_file(csv_path, output_dir='formatted', convert_tz=False, convert_uni
             gdf.to_file(output_path, driver=driver)
         else:
             df_out.to_csv(output_path, index=False)
-        print(f"Saved cleaned file to: {output_path}")
 
 def process_folder(folder_path, output_dir='formatted', convert_tz=False, convert_units=True, driver='CSV'):
     csv_files = glob.glob(os.path.join(folder_path, '*.csv'))
