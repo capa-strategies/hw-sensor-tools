@@ -18,7 +18,7 @@ def main():
     convert_tz = args.convert_tz
     unit_convert = args.convert_imperial
     driver = args.ogr_driver
-    group_files = args.group_files
+    merge_files = args.merge_files
 
     if os.path.isdir(input_path):
         # Check if output_dir is relative (no root)outp
@@ -28,10 +28,10 @@ def main():
 
     print(driver)
     if os.path.isdir(input_path):
-        process_folder(input_path, output_dir, convert_tz, unit_convert, driver, group_files)
+        process_folder(input_path, output_dir, convert_tz, unit_convert, driver, merge_files)
     elif os.path.isfile(input_path):
-        if group_files:
-            print("Warning: --group_files option ignored for single file input")
+        if merge_files:
+            print("Warning: --merge_files option ignored for single file input")
         process_file(input_path, output_dir, convert_tz, unit_convert, driver)
     else:
         print("Input path is neither a file nor a folder. Please check.")

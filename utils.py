@@ -178,16 +178,16 @@ def process_file(csv_path, output_dir='formatted', convert_tz=False, convert_uni
             gdf.to_file(output_path, driver=driver)
         else:
             df_out.to_csv(output_path, index=False)
-    
 
-def process_folder(folder_path, output_dir='formatted', convert_tz=False, convert_units=True, driver='CSV', group_files=False):
+
+def process_folder(folder_path, output_dir='formatted', convert_tz=False, convert_units=True, driver='CSV', merge_files=False):
     csv_files = glob.glob(os.path.join(folder_path, '*.csv'))
     
     if not csv_files:
         print("No CSV files found in the specified folder")
         return
     
-    if group_files:
+    if merge_files:
         print(f"Grouping {len(csv_files)} CSV files into a single output")
         
         # Process all files and collect dataframes
@@ -201,7 +201,7 @@ def process_folder(folder_path, output_dir='formatted', convert_tz=False, conver
             return
 
         df_out = pd.concat(all_dataframes, ignore_index=True)
-        
+
         # Save combined output if output_dir specified
         if output_dir:
             os.makedirs(output_dir, exist_ok=True)
