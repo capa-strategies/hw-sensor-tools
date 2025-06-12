@@ -24,7 +24,7 @@ options:
 
 ### Process individual files
 ```bash
-python3 hw-file-format.py --input_files sensor_data.csv --ogr_driver GPKG --convert_tz
+python3 hw-file-format.py --input_files 'testdata/CAPA2047_190823_105102_0.csv' --ogr_driver GPKG --convert_tz
 ```
 
 ### Process folder with individual output files
