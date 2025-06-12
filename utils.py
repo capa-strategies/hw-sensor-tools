@@ -130,7 +130,7 @@ def convert_gps_time(df, tz_str, convert_tz=False):
     return df
 
 def process_file(csv_path, output_dir='formatted', convert_tz=False, convert_units=True, 
-    driver='CSV'):
+    driver='CSV', export=True):
 
     print(f"Processing file: {csv_path}")
 
@@ -161,8 +161,9 @@ def process_file(csv_path, output_dir='formatted', convert_tz=False, convert_uni
         if col not in ['lat', 'lon']:
             df_out[col] = df_out[col].map(lambda x: f"{x:.2f}")
 
-    # Save output if output_dir specified
-    if output_dir:
+    if not export:
+        return(df_out)
+    else:
         os.makedirs(output_dir, exist_ok=True)
         base_name = os.path.basename(csv_path) 
         if driver == 'GeoJSON' and not base_name.lower().endswith('.geojson'):
@@ -177,6 +178,7 @@ def process_file(csv_path, output_dir='formatted', convert_tz=False, convert_uni
             gdf.to_file(output_path, driver=driver)
         else:
             df_out.to_csv(output_path, index=False)
+    
 
 def process_folder(folder_path, output_dir='formatted', convert_tz=False, convert_units=True, driver='CSV', group_files=False):
     csv_files = glob.glob(os.path.join(folder_path, '*.csv'))
@@ -191,49 +193,15 @@ def process_folder(folder_path, output_dir='formatted', convert_tz=False, conver
         # Process all files and collect dataframes
         all_dataframes = []
         for f in csv_files:
-            print(f"Processing file: {f}")
-            
-            # Clean lat/lon
-            df = load_hw_csv(f)
-            
-            if len(df) == 0:
-                print(f"Warning: Input dataframe for {f} is empty, skipping file")
-                continue
-
-            df_clean = deg_to_dec(df) 
-            
-            if len(df_clean) == 0:
-                print(f"Warning: No valid data remaining in {f} after cleaning, skipping file")
-                continue
-                
+            df_clean = process_file(f, output_dir, convert_tz, convert_units, driver='CSV', export=False)
             all_dataframes.append(df_clean)
         
         if not all_dataframes:
             print("No valid data found in any CSV files")
             return
-            
-        # Combine all dataframes
-        combined_df = pd.concat(all_dataframes, ignore_index=True)
-        print(f"Combined {len(all_dataframes)} files into {len(combined_df)} total records")
+
+        df_out = pd.concat(all_dataframes, ignore_index=True)
         
-        # Clean and convert date/time using average coordinates for timezone
-        tf = TimezoneFinder()
-        timezone_str = tf.timezone_at(lat=combined_df['lat'].mean(), lng=combined_df['lon'].mean())
-        df_out = convert_gps_time(combined_df, timezone_str, convert_tz)
-
-        if convert_units:
-            df_out['temperature'] = df_out['temperature']*(1.8) + 32
-            df_out['speedkmhr'] = df_out['speedkmhr'] * 0.621371
-            df_out['altitude'] = df_out['altitude'] * 3.28084
-            df_out.rename(columns={"speedkmhr": "speedmph"}, inplace=True)
-
-        # floating point handling
-        df_out['lat'] = df_out['lat'].map(lambda x: f"{x:.6f}")
-        df_out['lon'] = df_out['lon'].map(lambda x: f"{x:.6f}")
-        for col in df_out.select_dtypes(include=['float']).columns:
-            if col not in ['lat', 'lon']:
-                df_out[col] = df_out[col].map(lambda x: f"{x:.2f}")
-
         # Save combined output if output_dir specified
         if output_dir:
             os.makedirs(output_dir, exist_ok=True)
