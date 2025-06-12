@@ -167,18 +167,98 @@ def process_file(csv_path, output_dir='formatted', convert_tz=False, convert_uni
         base_name = os.path.basename(csv_path) 
         if driver == 'GeoJSON' and not base_name.lower().endswith('.geojson'):
             base_name = os.path.splitext(base_name)[0] + '.geojson'
-        elif driver == 'Geopackage' and not base_name.lower().endswith('.gpkg'):
+        elif driver == 'GPKG' and not base_name.lower().endswith('.gpkg'):
             base_name = os.path.splitext(base_name)[0] + '.gpkg'
 
         output_path = os.path.join(output_dir, base_name)
-        if driver in ['Geopackage', 'GeoJSON']:
+        if driver in ['GPKG', 'GeoJSON']:
             geometry = gpd.points_from_xy(df_out.lon, df_out.lat)
             gdf = gpd.GeoDataFrame(df_out, geometry=geometry, crs="EPSG:4326")
             gdf.to_file(output_path, driver=driver)
         else:
             df_out.to_csv(output_path, index=False)
 
-def process_folder(folder_path, output_dir='formatted', convert_tz=False, convert_units=True, driver='CSV'):
+def process_folder(folder_path, output_dir='formatted', convert_tz=False, convert_units=True, driver='CSV', group_files=False):
     csv_files = glob.glob(os.path.join(folder_path, '*.csv'))
-    for f in csv_files:
-        process_file(f, output_dir, convert_tz, convert_units, driver)
+    
+    if not csv_files:
+        print("No CSV files found in the specified folder")
+        return
+    
+    if group_files:
+        print(f"Grouping {len(csv_files)} CSV files into a single output")
+        
+        # Process all files and collect dataframes
+        all_dataframes = []
+        for f in csv_files:
+            print(f"Processing file: {f}")
+            
+            # Clean lat/lon
+            df = load_hw_csv(f)
+            
+            if len(df) == 0:
+                print(f"Warning: Input dataframe for {f} is empty, skipping file")
+                continue
+
+            df_clean = deg_to_dec(df) 
+            
+            if len(df_clean) == 0:
+                print(f"Warning: No valid data remaining in {f} after cleaning, skipping file")
+                continue
+                
+            all_dataframes.append(df_clean)
+        
+        if not all_dataframes:
+            print("No valid data found in any CSV files")
+            return
+            
+        # Combine all dataframes
+        combined_df = pd.concat(all_dataframes, ignore_index=True)
+        print(f"Combined {len(all_dataframes)} files into {len(combined_df)} total records")
+        
+        # Clean and convert date/time using average coordinates for timezone
+        tf = TimezoneFinder()
+        timezone_str = tf.timezone_at(lat=combined_df['lat'].mean(), lng=combined_df['lon'].mean())
+        df_out = convert_gps_time(combined_df, timezone_str, convert_tz)
+
+        if convert_units:
+            df_out['temperature'] = df_out['temperature']*(1.8) + 32
+            df_out['speedkmhr'] = df_out['speedkmhr'] * 0.621371
+            df_out['altitude'] = df_out['altitude'] * 3.28084
+            df_out.rename(columns={"speedkmhr": "speedmph"}, inplace=True)
+
+        # floating point handling
+        df_out['lat'] = df_out['lat'].map(lambda x: f"{x:.6f}")
+        df_out['lon'] = df_out['lon'].map(lambda x: f"{x:.6f}")
+        for col in df_out.select_dtypes(include=['float']).columns:
+            if col not in ['lat', 'lon']:
+                df_out[col] = df_out[col].map(lambda x: f"{x:.2f}")
+
+        # Save combined output if output_dir specified
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+            
+            # Create output filename based on folder name
+            folder_name = os.path.basename(folder_path.rstrip('/'))
+            base_name = f"{folder_name}_combined"
+            
+            if driver == 'GeoJSON' and not base_name.lower().endswith('.geojson'):
+                base_name = base_name + '.geojson'
+            elif driver == 'GPKG' and not base_name.lower().endswith('.gpkg'):
+                base_name = base_name + '.gpkg'
+            elif (driver is None or driver == 'CSV') and not base_name.lower().endswith('.csv'):
+                base_name = base_name + '.csv'
+
+            output_path = os.path.join(output_dir, base_name)
+            if driver in ['GPKG', 'GeoJSON']:
+                geometry = gpd.points_from_xy(df_out.lon, df_out.lat)
+                gdf = gpd.GeoDataFrame(df_out, geometry=geometry, crs="EPSG:4326")
+                gdf.to_file(output_path, driver=driver)
+            else:
+                df_out.to_csv(output_path, index=False)
+                
+            print(f"Combined output saved to: {output_path}")
+    else:
+        # Process files individually as before
+        for f in csv_files:
+            process_file(f, output_dir, convert_tz, convert_units, driver)
