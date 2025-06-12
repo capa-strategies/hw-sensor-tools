@@ -12,12 +12,12 @@ options:
   --input_files INPUT_FILES
                         Input CSV file or folder path
   --output_folder OUTPUT_FOLDER
-                        Output folder path (optional, defaults to a 'formatted' folder)
+                        Output folder path (optional, defaults to a 'formatted' folder in repo root directory)
   --ogr_driver OGR_DRIVER
                         File format for export: CSV, GeoJSON, or GPKG (optional, defaults to CSV)
   --convert_tz          Convert to local timezone or leave in UTC (optional, defaults to UTC)
   --convert_imperial    Convert to imperial units or leave in metric (optional, defaults to leaving in metric)
-  --group_files         Group all CSV files in folder into a single output file (optional, only applies to folder input)
+  --merge_files         Group all CSV files in folder into a single output file (optional, only applies to folder input)
 ```
 
 ## Examples
@@ -34,5 +34,5 @@ python3 hw-file-format.py --input_files testdata --ogr_driver GeoJSON --convert_
 
 ### Group all CSV files in folder into single output
 ```bash
-python3 hw-file-format.py --input_files testdata --ogr_driver GPKG --convert_tz --group_files
+python3 hw-file-format.py --input_files testdata --ogr_driver GPKG --convert_tz --merge_files
 ```
