@@ -9,7 +9,7 @@ def main():
     parser.add_argument('--ogr_driver', help="File format for export: CSV, GeoJSON, or GPKG (optional, defaults to CSV)")
     parser.add_argument('--convert_tz', action='store_true', help="Convert to local timezone or leave in UTC (optional, defaults to UTC)")
     parser.add_argument('--convert_imperial', action='store_true', help="Convert to imperial units or leave in metric (optional, defaults to leaving in metric)")
-    parser.add_argument('--group_files', action='store_true', help="Group all CSV files in folder into a single output file (optional, only applies to folder input)")
+    parser.add_argument('--merge_files', action='store_true', help="Merge all CSV files in folder into a single output file (optional, only applies to folder input)")
     
     args = parser.parse_args()
     
